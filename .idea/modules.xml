@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/PasC.iml" filepath="$PROJECT_DIR$/.idea/PasC.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PasC-Compiler.iml" filepath="$PROJECT_DIR$/.idea/PasC-Compiler.iml" />
     </modules>
   </component>
 </project>
