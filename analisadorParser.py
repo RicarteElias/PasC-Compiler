@@ -46,10 +46,9 @@ class AnalisadorParser:
             return False
 
     def prog(self):
-        tokenTemp = copy.copy(self.token)
         self.eat(Tag.KW_PROGRAM)
         if self.eat(Tag.ID):
-            lexer.TS.setType(tokenTemp, Tag.TIPO_VAZIO)
+            self.lexer.ts.setType(self.token.lexema, Tag.TIPO_VAZIO)
         self.body()
 
     def body(self):
@@ -85,7 +84,7 @@ class AnalisadorParser:
     def idList(self, tipo):
         tokenTemp = copy.copy(self.token)
         if self.eat(Tag.ID):
-            lexer.TS.setType(tokenTemp.lexema, tipo)
+            self.lexer.ts.setType(tokenTemp.lexema, tipo)
         self.idListLinha()
 
     def idListLinha(self):
@@ -115,11 +114,17 @@ class AnalisadorParser:
 
     def writeStmt(self):
         self.eat(Tag.KW_WRITE)
-        self.simpleExpr()
+        tipo = self.simpleExpr().tipo
+
+        if tipo == Tag.TIPO_LITERAL and tipo == Tag.TIPO_NUMERO:
+            self.sinalizaErroSemantico("Imcompatibilidade para a impressão de valores")
 
     def readStmt(self):
         self.eat(Tag.KW_READ)
-        self.eat(Tag.ID)
+        if self.conferirToken([Tag.ID]):
+            if self.lexer.ts.idIsNull(self.token.lexema):
+                self.sinalizaErroSemantico("Identificador não declarado")
+            self.advance()
 
     def whileStmt(self):
         self.stmtPrefix()
@@ -130,7 +135,8 @@ class AnalisadorParser:
     def ifStmt(self):
         self.eat(Tag.KW_IF)
         self.eat(Tag.SMB_OPA)
-        self.expression()
+        if self.expression().tipo != Tag.TIPO_LOGICO:
+            self.sinalizaErroSemantico("Expressão lógica mal formada")
         self.eat(Tag.SMB_CPA)
         self.eat(Tag.SMB_OBC)
         self.stmtList()
@@ -146,12 +152,12 @@ class AnalisadorParser:
     def assignStmt(self):
 
         if self.conferirToken([Tag.ID]):
-            if lexer.TS.idIsNull(self.token.lexema):
+            if self.lexer.ts.idIsNull(self.token.lexema):
                 self.sinalizaErroSemantico("Identificador não foi declarado")
             self.advance()
         self.eat(Tag.OP_ATRIB)
-        if self.simpleExpr() != lexer.TS.getType(self.token.lexema):
-            self.sinalizaErroSemantico("Atribuição imcompativel")
+        if self.simpleExpr() != self.lexer.ts.getType(self.token.lexema):
+            self.sinalizaErroSemantico("Atribuição imcompatível")
 
     def stmtPrefix(self):
         self.eat(Tag.KW_WHILE)
@@ -160,49 +166,96 @@ class AnalisadorParser:
         self.eat(Tag.SMB_CPA)
 
     def expression(self):
-        self.simpleExpr()
-        self.expressionLinha()
+        noExp = No()
+        noSimpleExp = self.simpleExpr()
+        noExpLinha = self.expressionLinha()
+        if noExpLinha.tipo == Tag.TIPO_VAZIO:
+            noExp.tipo = noSimpleExp.tipo
+        elif noExpLinha.tipo == noSimpleExp.tipo and noSimpleExp.tipo == Tag.TIPO_LOGICO:
+            noExp.tipo = Tag.TIPO_LOGICO
+        else:
+            noExp.tipo = Tag.TIPO_LOGICO
+        return noExp
 
     def simpleExpr(self):
-        noSimpE = No()
-        noTerm = self.term()
-        noSimpleExpr= self.simpleExprLinha()
-        if noSimpleExpr.tipo == Tag.TIPO_VAZIO:
-            noSimpE.tipo = noSimpleExpr.tipo
-
-        return noSimpE
-
-
+        simpExp = No()
+        term = self.term()
+        simExpLinha = self.simpleExprLinha()
+        if simExpLinha.tipo == Tag.TIPO_VAZIO:
+            simpExp.tipo = term.tipo
+        elif simExpLinha.tipo == term.tipo and simExpLinha.tipo == Tag.TIPO_NUMERO:
+             simpExp = Tag.TIPO_LOGICO
+        else:
+            simpExp.tipo = Tag.TIPO_ERRO
+        return simpExp
 
     def term(self):
-        self.factorB()
-        self.termLinha()
+        term = No()
+        factoB = self.factorB()
+        termLinha = self.termLinha()
+        if termLinha.tipo == Tag.TIPO_VAZIO:
+            term.tipo == factoB.tipo
+        elif termLinha == factoB.tipo and termLinha == Tag.TIPO_NUMERO:
+            term = Tag.TIPO_NUMERO
+        else:
+            term.tipo = Tag.TIPO_ERRO
+        return term
 
     def simpleExprLinha(self):
-        noSeLi = No()
+        simpleExprLinha = No()
         if self.conferirToken([Tag.OP_EQ, Tag.OP_GT, Tag.OP_GE, Tag.OP_LT, Tag.OP_LE, Tag.OP_NE]):
             self.relop()
-            self.term()
-            self.simpleExprLinha()
-        return noSeLi
+            term = self.term()
+            simpleExprLinhaFilho = self.simpleExprLinha()
+            if simpleExprLinhaFilho.tipo == Tag.TIPO_VAZIO and term.tipo == Tag.TIPO_NUMERO:
+                simpleExprLinha.tipo = Tag.TIPO_NUMERO
+            elif simpleExprLinhaFilho.tipo == term.tipo and term.tipo == Tag.TIPO_NUMERO:
+                simpleExprLinha.tipo = Tag.TIPO_NUMERO
+            else:
+                simpleExprLinha.tipo = Tag.TIPO_ERRO
+        return simpleExprLinha
 
     def factorB(self):
-        self.factorA()
-        self.factorBLinha()
+        factorB = No()
+        factorA = self.factorA()
+        factorBLinha = self.factorBLinha()
+        if factorBLinha.tipo == Tag.TIPO_VAZIO:
+            factorB.tipo = factorA
+        elif factorBLinha.tipo == factorA.tipo and factorBLinha == Tag.TIPO_NUMERO:
+            factorB.tipo = Tag.TIPO_NUMERO
+        else:
+            factorB.tipo = Tag.TIPO_ERRO
+        return factorB
 
     def termLinha(self):
+        termLinha = No()
         if self.conferirToken([Tag.OP_AD, Tag.OP_MIN]):
-            self.addOP()
-            self.factorB()
-            self.termLinha()
+            self.addOp()
+            factorB = self.factorB()
+            termLinhaFilho =self.termLinha()
+            if termLinhaFilho.tipo == Tag.TIPO_VAZIO and factorB.tipo == Tag.TIPO_NUMERO:
+                termLinha.tipo = Tag.TIPO_NUMERO
+            elif termLinhaFilho == factorB.tipo and factorB.tipo == Tag.TIPO_NUMERO:
+                termLinha.tipo = Tag.TIPO_NUMERO
+            else:
+                termLinha.tipo = Tag.TIPO_ERRO
+        return termLinha
 
     def expressionLinha(self):
+        expLinha = No()
         if self.conferirToken([Tag.KW_OR, Tag.KW_AND]):
             self.logop()
-            self.simpleExpr()
-            self.expressionLinha()
+            simpleExpres = self.simpleExpr()
+            exprLinhaFilho = self.expressionLinha()
+            if exprLinhaFilho.tipo == Tag.TIPO_VAZIO and simpleExpres.tipo == Tag.TIPO_LOGICO:
+                expLinha.tipo = Tag.TIPO_LOGICO
+            elif exprLinhaFilho.tipo == simpleExpres.tipo and simpleExpres.tipo == Tag.TIPO_LOGICO:
+                expLinha.tipo = Tag.TIPO_LOGICO
+            else:
+                expLinha.tipo = Tag.TIPO_ERRO
+        return expLinha
 
-    def addOP(self):
+    def addOp(self):
         if self.conferirToken([Tag.OP_AD, Tag.OP_MIN]):
             self.advance()
         else:
@@ -217,7 +270,7 @@ class AnalisadorParser:
     def factor(self):
         factor = No()
         if self.conferirToken([Tag.ID]):
-
+            factor.tipo = self.lexer.ts.getType(self.token.lexema)
             self.advance()
         elif self.conferirToken([Tag.SMB_OPA]):
             self.eat(Tag.SMB_OPA)
@@ -227,13 +280,15 @@ class AnalisadorParser:
             factor.tipo = self.constant()
         else:
             self.sinalizaErroSintatico("Fator inválido")
-
         return factor
 
     def factorA(self):
+        factorA = No()
         if self.conferirToken([Tag.KW_NOT]):
             self.advance()
-        self.factor()
+        factorA.tipo = self.factor().tipo
+
+        return factorA
 
     def constant(self):
         constant_t = No()
@@ -249,10 +304,18 @@ class AnalisadorParser:
             self.sinalizaErroSintatico("Constante esperada'")
 
     def factorBLinha(self):
+        factorBlinha = No()
         if self.conferirToken([Tag.OP_DIV, Tag.OP_MUL]):
             self.mulop()
-            self.factorA()
-            self.factorBLinha()
+            factorA =self.factorA()
+            factorBlinhaFilho = self.factorBLinha()
+            if factorBlinhaFilho.tipo == Tag.TIPO_VAZIO and factorA.tipo == Tag.TIPO_NUMERO:
+                factorBlinha.tipo = Tag.TIPO_NUMERO
+            elif factorBlinhaFilho.tipo == factorA.tipo and factorA.tipo == Tag.TIPO_NUMERO:
+                factorBlinha.tipo = Tag.TIPO_NUMERO
+            else:
+                factorBlinha = Tag.TIPO_ERRO
+        return factorBlinha
 
     def mulop(self):
         if self.conferirToken([Tag.OP_MUL, Tag.OP_DIV]):
@@ -261,10 +324,12 @@ class AnalisadorParser:
             self.sinalizaErroSintatico("Operador inválido, utilize * ou /")
 
     def relop(self):
+        relop = No
         if self.conferirToken([Tag.OP_EQ, Tag.OP_GT, Tag.OP_GE, Tag.OP_LT, Tag.OP_LE, Tag.OP_NE]):
             self.advance()
         else:
             self.sinalizaErroSintatico("Aguardando operador")
+        return relop
 
     def conferirToken(self, lista):
         return self.token.getNome() in lista

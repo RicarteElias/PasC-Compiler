@@ -37,10 +37,10 @@ class TS:
         for k, t in (self.ts.items()):
             print(k, ":", t.toString())
 
-    def setType(self, lexema, tipo):
-        self.ts[lexema].setTipo(tipo)
+    def setType(self, lexema, tag):
+        self.ts[lexema].setTipo(tag)
 
-    def getType(self,lexema):
+    def getType(self, lexema):
         return self.ts[lexema].getTipo()
 
     def idIsNull(self, lexema):
