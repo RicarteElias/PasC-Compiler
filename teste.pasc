@@ -4,7 +4,7 @@ Programa Teste
 
 // Este programa foi usado como teste
 
-program
+program p1
    num x, y, z;
    char k; 
 {

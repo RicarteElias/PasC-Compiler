@@ -122,6 +122,9 @@ class Tag(Enum):
             43: ")",
             44: ",",
             45: ";",
-            50: "ID"
+            50: "ID",
+            61: "NUMERICO",
+            71: "LITERAL",
+
         }
         return tags_names[self.value]
