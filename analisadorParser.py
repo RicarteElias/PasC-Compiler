@@ -1,10 +1,7 @@
 import sys
 import copy
 
-import lexer
 from tag import Tag
-from token1 import Token
-from lexer import Lexer
 from no import No
 
 
@@ -42,7 +39,7 @@ class AnalisadorParser:
             self.advance()
             return True
         else:
-            self.sinalizaErroSintatico("token esperado " + str(t))
+            self.sinalizaErroSintatico("token esperado " + t.tagNome())
             return False
 
     def prog(self):
@@ -82,15 +79,15 @@ class AnalisadorParser:
         return no_type
 
     def idList(self, tipo):
-        tokenTemp = copy.copy(self.token)
-        if self.eat(Tag.ID):
-            self.lexer.ts.setType(tokenTemp.lexema, tipo)
-        self.idListLinha()
+        if self.conferirToken([Tag.ID]):
+            self.lexer.ts.setType(self.token.lexema, tipo)
+            self.advance()
+        self.idListLinha(tipo)
 
-    def idListLinha(self):
+    def idListLinha(self, tipo):
         if self.conferirToken([Tag.SMB_COM]):
             self.advance()
-            self.idList(self.type())
+            self.idList(tipo)
 
     def stmtList(self):
         if self.token.getNome() == Tag.ID or self.token.getNome() == Tag.KW_IF or self.token.getNome() == Tag.KW_READ or self.token.getNome() == Tag.KW_WHILE or self.token.getNome() == Tag.KW_WRITE:
@@ -135,7 +132,8 @@ class AnalisadorParser:
     def ifStmt(self):
         self.eat(Tag.KW_IF)
         self.eat(Tag.SMB_OPA)
-        if self.expression().tipo != Tag.TIPO_LOGICO:
+        expression = self.expression()
+        if expression.tipo != Tag.TIPO_LOGICO:
             self.sinalizaErroSemantico("Expressão lógica mal formada")
         self.eat(Tag.SMB_CPA)
         self.eat(Tag.SMB_OBC)
@@ -150,7 +148,6 @@ class AnalisadorParser:
             self.eat(Tag.SMB_CBC)
 
     def assignStmt(self):
-        simpleExpr = No()
         tokenTemp = copy.copy(self.token)
         if self.conferirToken([Tag.ID]):
             if self.lexer.ts.idIsNull(self.token.lexema):
@@ -178,7 +175,7 @@ class AnalisadorParser:
         elif noExpLinha.tipo == noSimpleExp.tipo and noSimpleExp.tipo == Tag.TIPO_LOGICO:
             noExp.tipo = Tag.TIPO_LOGICO
         else:
-            noExp.tipo = Tag.TIPO_LOGICO
+            noExp.tipo = Tag.TIPO_ERRO
         return noExp
 
     def simpleExpr(self):
@@ -325,7 +322,7 @@ class AnalisadorParser:
             elif factorBlinhaFilho.tipo == factorA.tipo and factorA.tipo == Tag.TIPO_NUMERO:
                 factorBlinha.tipo = Tag.TIPO_NUMERO
             else:
-                factorBlinha = Tag.TIPO_ERRO
+                factorBlinha.tipo = Tag.TIPO_ERRO
         return factorBlinha
 
     def mulop(self):

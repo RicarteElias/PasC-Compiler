@@ -5,6 +5,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analisadorParser.py" beforeDir="false" afterPath="$PROJECT_DIR$/analisadorParser.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tag.py" beforeDir="false" afterPath="$PROJECT_DIR$/tag.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/teste.pasc" beforeDir="false" afterPath="$PROJECT_DIR$/teste.pasc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ts.py" beforeDir="false" afterPath="$PROJECT_DIR$/ts.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +64,7 @@
       <workItem from="1625456772548" duration="5814000" />
       <workItem from="1625525223200" duration="22155000" />
       <workItem from="1625548096834" duration="570000" />
-      <workItem from="1625585420705" duration="8312000" />
+      <workItem from="1625585420705" duration="16523000" />
     </task>
     <servers />
   </component>
@@ -71,13 +73,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/analisadorParser.py</url>
-          <line>225</line>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -93,6 +88,6 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/PasC_Compiler$main.coverage" NAME="main Coverage Results" MODIFIED="1625592783203" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/PasC_Compiler$main.coverage" NAME="main Coverage Results" MODIFIED="1625601962931" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

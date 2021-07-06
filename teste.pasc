@@ -5,7 +5,7 @@ Programa Teste
 // Este programa foi usado como teste
 
 program P1
-   num x, y, z
+   num x, y, z;
    char k; 
 {
    write "Teste para o Lexer";
