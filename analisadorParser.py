@@ -61,26 +61,29 @@ class AnalisadorParser:
             self.declList()
 
     def stmtList(self):
-        pass
+        if self.conferirToken([Tag.ID, Tag.KW_IF, Tag.KW_WHILE, Tag.KW_READ, Tag.KW_WRITE]):
+            self.stmt()
+            self.eat(Tag.SMB_SEM)
+            self.stmtList()
 
     def decl(self):
         self.idList(self.type())
 
     def type(self):
-        no_type = No()
+        type = No()
         if self.conferirToken([Tag.KW_NUM]):
-            no_type.tipo = Tag.TIPO_NUMERO
+            type.tipo = Tag.TIPO_NUMERO
             self.advance()
         elif self.conferirToken([Tag.KW_CHAR]):
-            no_type.tipo = Tag.TIPO_LITERAL
+            type.tipo = Tag.TIPO_LITERAL
             self.advance()
         else:
             self.sinalizaErroSintatico("Aguardando 'num' ou 'char'")
-        return no_type
+        return type
 
     def idList(self, tipo):
         if self.conferirToken([Tag.ID]):
-            self.lexer.ts.setType(self.token.lexema, tipo)
+            self.lexer.ts.setType(self.token.lexema, tipo.tipo)
             self.advance()
         self.idListLinha(tipo)
 
@@ -185,7 +188,7 @@ class AnalisadorParser:
         if simExpLinha.tipo == Tag.TIPO_VAZIO:
             simpExp.tipo = term.tipo
         elif simExpLinha.tipo == term.tipo and simExpLinha.tipo == Tag.TIPO_NUMERO:
-            simpExp = Tag.TIPO_LOGICO
+            simpExp.tipo = Tag.TIPO_LOGICO
         else:
             simpExp.tipo = Tag.TIPO_ERRO
         return simpExp
@@ -195,9 +198,9 @@ class AnalisadorParser:
         factoB = self.factorB()
         termLinha = self.termLinha()
         if termLinha.tipo == Tag.TIPO_VAZIO:
-            term.tipo == factoB.tipo
-        elif termLinha == factoB.tipo and termLinha == Tag.TIPO_NUMERO:
-            term = Tag.TIPO_NUMERO
+            term.tipo = factoB.tipo
+        elif termLinha.tipo == factoB.tipo and termLinha.tipo == Tag.TIPO_NUMERO:
+            term.tipo = Tag.TIPO_NUMERO
         else:
             term.tipo = Tag.TIPO_ERRO
         return term
@@ -222,7 +225,7 @@ class AnalisadorParser:
         factorBLinha = self.factorBLinha()
         if factorBLinha.tipo == Tag.TIPO_VAZIO:
             factorB.tipo = factorA.tipo
-        elif factorBLinha.tipo == factorA.tipo and factorBLinha == Tag.TIPO_NUMERO:
+        elif factorBLinha.tipo == factorA.tipo and factorBLinha.tipo == Tag.TIPO_NUMERO:
             factorB.tipo = Tag.TIPO_NUMERO
         else:
             factorB.tipo = Tag.TIPO_ERRO
@@ -278,7 +281,7 @@ class AnalisadorParser:
             factor = self.expression()
             self.eat(Tag.SMB_CPA)
         elif self.conferirToken([Tag.NUM_CONST, Tag.CHAR_CONST]):
-            factor.tipo = self.constant()
+            factor = self.constant()
         else:
             self.sinalizaErroSintatico("Fator inválido")
         return factor
@@ -299,17 +302,16 @@ class AnalisadorParser:
         return factorA
 
     def constant(self):
-        constant_t = No()
+        constant = No()
         if self.conferirToken([Tag.NUM_CONST]):
-            constant_t.tipo = Tag.TIPO_NUMERO
+            constant.tipo = Tag.TIPO_NUMERO
             self.advance()
-            return constant_t
         elif self.conferirToken([Tag.CHAR_CONST]):
-            constant_t.tipo = Tag.TIPO_LITERAL
+            constant.tipo = Tag.TIPO_LITERAL
             self.advance()
-            return constant_t
         else:
             self.sinalizaErroSintatico("Constante esperada'")
+        return constant
 
     def factorBLinha(self):
         factorBlinha = No()
