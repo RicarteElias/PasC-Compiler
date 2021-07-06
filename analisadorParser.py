@@ -1,6 +1,7 @@
 import sys
 import copy
 
+import lexer
 from tag import Tag
 from token1 import Token
 from lexer import Lexer
@@ -45,8 +46,10 @@ class AnalisadorParser:
             return False
 
     def prog(self):
+        tokenTemp = copy.copy(self.token)
         self.eat(Tag.KW_PROGRAM)
-        self.eat(Tag.ID)
+        if self.eat(Tag.ID):
+            lexer.TS.setType(tokenTemp, Tag.TIPO_VAZIO)
         self.body()
 
     def body(self):
@@ -65,25 +68,30 @@ class AnalisadorParser:
         pass
 
     def decl(self):
-        self.type()
-        self.idList()
+        self.idList(self.type())
 
     def type(self):
+        no_type = No()
         if self.conferirToken([Tag.KW_NUM]):
+            no_type.tipo = Tag.TIPO_NUMERO
             self.advance()
         elif self.conferirToken([Tag.KW_CHAR]):
+            no_type.tipo = Tag.TIPO_LITERAL
             self.advance()
         else:
             self.sinalizaErroSintatico("Aguardando 'num' ou 'char'")
+        return no_type
 
-    def idList(self):
-        self.eat(Tag.ID)
+    def idList(self, tipo):
+        tokenTemp = copy.copy(self.token)
+        if self.eat(Tag.ID):
+            lexer.TS.setType(tokenTemp.lexema, tipo)
         self.idListLinha()
 
     def idListLinha(self):
         if self.conferirToken([Tag.SMB_COM]):
             self.advance()
-            self.idList()
+            self.idList(self.type())
 
     def stmtList(self):
         if self.token.getNome() == Tag.ID or self.token.getNome() == Tag.KW_IF or self.token.getNome() == Tag.KW_READ or self.token.getNome() == Tag.KW_WHILE or self.token.getNome() == Tag.KW_WRITE:
@@ -136,9 +144,14 @@ class AnalisadorParser:
             self.eat(Tag.SMB_CBC)
 
     def assignStmt(self):
-        self.eat(Tag.ID)
+
+        if self.conferirToken([Tag.ID]):
+            if lexer.TS.idIsNull(self.token.lexema):
+                self.sinalizaErroSemantico("Identificador não foi declarado")
+            self.advance()
         self.eat(Tag.OP_ATRIB)
-        self.simpleExpr()
+        if self.simpleExpr() != lexer.TS.getType(self.token.lexema):
+            self.sinalizaErroSemantico("Atribuição imcompativel")
 
     def stmtPrefix(self):
         self.eat(Tag.KW_WHILE)
@@ -151,18 +164,27 @@ class AnalisadorParser:
         self.expressionLinha()
 
     def simpleExpr(self):
-        self.term()
-        self.simpleExprLinha()
+        noSimpE = No()
+        noTerm = self.term()
+        noSimpleExpr= self.simpleExprLinha()
+        if noSimpleExpr.tipo == Tag.TIPO_VAZIO:
+            noSimpE.tipo = noSimpleExpr.tipo
+
+        return noSimpE
+
+
 
     def term(self):
         self.factorB()
         self.termLinha()
 
     def simpleExprLinha(self):
-        if self.conferirToken([Tag.OP_EQ, Tag.OP_GT, Tag.OP_GE, Tag.OP_LT,Tag.OP_LE,Tag.OP_NE]):
+        noSeLi = No()
+        if self.conferirToken([Tag.OP_EQ, Tag.OP_GT, Tag.OP_GE, Tag.OP_LT, Tag.OP_LE, Tag.OP_NE]):
             self.relop()
             self.term()
             self.simpleExprLinha()
+        return noSeLi
 
     def factorB(self):
         self.factorA()
@@ -193,16 +215,20 @@ class AnalisadorParser:
             self.sinalizaErroSintatico("Esperado 'or' ou 'and'")
 
     def factor(self):
+        factor = No()
         if self.conferirToken([Tag.ID]):
+
             self.advance()
         elif self.conferirToken([Tag.SMB_OPA]):
             self.eat(Tag.SMB_OPA)
             self.expression()
             self.eat(Tag.SMB_CPA)
         elif self.conferirToken([Tag.NUM_CONST, Tag.CHAR_CONST]):
-            self.constant()
+            factor.tipo = self.constant()
         else:
             self.sinalizaErroSintatico("Fator inválido")
+
+        return factor
 
     def factorA(self):
         if self.conferirToken([Tag.KW_NOT]):
@@ -210,8 +236,15 @@ class AnalisadorParser:
         self.factor()
 
     def constant(self):
-        if self.conferirToken([Tag.NUM_CONST, Tag.CHAR_CONST]):
+        constant_t = No()
+        if self.conferirToken([Tag.NUM_CONST]):
+            constant_t.tipo = Tag.TIPO_NUMERO
             self.advance()
+            return constant_t
+        elif self.conferirToken([Tag.CHAR_CONST]):
+            constant_t.tipo = Tag.TIPO_LITERAL
+            self.advance()
+            return constant_t
         else:
             self.sinalizaErroSintatico("Constante esperada'")
 
@@ -235,5 +268,3 @@ class AnalisadorParser:
 
     def conferirToken(self, lista):
         return self.token.getNome() in lista
-
-

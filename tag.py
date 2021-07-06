@@ -57,4 +57,7 @@ class Tag(Enum):
     TIPO_VAZIO = 1000
     TIPO_LOGICO = 1001
     TIPO_NUMERO = 1002
+    TIPO_LITERAL = 1003
     TIPO_ERRO = 1004
+
+
