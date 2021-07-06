@@ -44,9 +44,10 @@ class AnalisadorParser:
 
     def prog(self):
         self.eat(Tag.KW_PROGRAM)
-        if self.eat(Tag.ID):
-            self.lexer.ts.setType(self.token.lexema, Tag.TIPO_VAZIO)
+        self.lexer.ts.setType(self.token.lexema, Tag.TIPO_VAZIO)
+        self.eat(Tag.ID)
         self.body()
+        self.eat(Tag.EOF)
 
     def body(self):
         self.declList()
@@ -154,7 +155,7 @@ class AnalisadorParser:
         tokenTemp = copy.copy(self.token)
         if self.conferirToken([Tag.ID]):
             if self.lexer.ts.idIsNull(self.token.lexema):
-                self.sinalizaErroSemantico("Identificador não foi declarado")
+                self.sinalizaErroSemantico("Identificador não foi declarado: " + self.token.lexema)
             self.advance()
         if self.eat(Tag.OP_ATRIB):
             simpleExpr = self.simpleExpr()

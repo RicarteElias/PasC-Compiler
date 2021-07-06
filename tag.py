@@ -93,6 +93,7 @@ class Tag(Enum):
 
     def tagNome(self):
         tags_names = {
+            -1: "EOF",
             1: "program",
             2: "if",
             3: "else",
@@ -120,6 +121,7 @@ class Tag(Enum):
             42: "(",
             43: ")",
             44: ",",
-            45: ";"
+            45: ";",
+            50: "ID"
         }
         return tags_names[self.value]

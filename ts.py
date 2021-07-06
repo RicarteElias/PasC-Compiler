@@ -44,4 +44,4 @@ class TS:
         return self.ts[lexema].getTipo()
 
     def idIsNull(self, lexema):
-        return self.ts[lexema].getTipo() is None
+        return self.ts[lexema].getTipo() is Tag.TIPO_VAZIO

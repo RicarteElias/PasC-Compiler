@@ -4,7 +4,7 @@ Programa Teste
 
 // Este programa foi usado como teste
 
-program P1
+program
    num x, y, z;
    char k; 
 {
@@ -20,6 +20,7 @@ program P1
    y = Z;
    x = 10.123 * y;
    k = "g";
+   Z = 5;
 
    if (y * 10 <= 100 and x / y >= 10) {
       write "C#n4a.m@luca qu& d1z SIM!";
