@@ -60,4 +60,19 @@ class Tag(Enum):
     TIPO_LITERAL = 1003
     TIPO_ERRO = 1004
 
+    TAGS_NAMES = {
+        1: "program",
+        2: "if",
+        3: "else",
+        4: "while",
+        5: "write",
+        6: "read",
+        7: "not",
+        8: "",
+        9: "",
+        10: "",
+        11: "",
+    }
 
+    def tagNome(self, tag):
+        pass

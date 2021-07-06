@@ -150,20 +150,24 @@ class AnalisadorParser:
             self.eat(Tag.SMB_CBC)
 
     def assignStmt(self):
-
+        simpleExpr = No()
+        tokenTemp = copy.copy(self.token)
         if self.conferirToken([Tag.ID]):
             if self.lexer.ts.idIsNull(self.token.lexema):
                 self.sinalizaErroSemantico("Identificador não foi declarado")
             self.advance()
-        self.eat(Tag.OP_ATRIB)
-        if self.simpleExpr() != self.lexer.ts.getType(self.token.lexema):
-            self.sinalizaErroSemantico("Atribuição imcompatível")
+        if self.eat(Tag.OP_ATRIB):
+            simpleExpr = self.simpleExpr()
+            if simpleExpr.tipo != tokenTemp.tipo:
+                self.sinalizaErroSemantico("Atribuição imcompatível")
 
     def stmtPrefix(self):
         self.eat(Tag.KW_WHILE)
         self.eat(Tag.SMB_OPA)
-        self.expression()
+        express = self.expression()
         self.eat(Tag.SMB_CPA)
+        if express.tipo != Tag.TIPO_LOGICO:
+            self.sinalizaErroSemantico("Expressão lógica mal formada")
 
     def expression(self):
         noExp = No()
@@ -184,7 +188,7 @@ class AnalisadorParser:
         if simExpLinha.tipo == Tag.TIPO_VAZIO:
             simpExp.tipo = term.tipo
         elif simExpLinha.tipo == term.tipo and simExpLinha.tipo == Tag.TIPO_NUMERO:
-             simpExp = Tag.TIPO_LOGICO
+            simpExp = Tag.TIPO_LOGICO
         else:
             simpExp.tipo = Tag.TIPO_ERRO
         return simpExp
@@ -220,7 +224,7 @@ class AnalisadorParser:
         factorA = self.factorA()
         factorBLinha = self.factorBLinha()
         if factorBLinha.tipo == Tag.TIPO_VAZIO:
-            factorB.tipo = factorA
+            factorB.tipo = factorA.tipo
         elif factorBLinha.tipo == factorA.tipo and factorBLinha == Tag.TIPO_NUMERO:
             factorB.tipo = Tag.TIPO_NUMERO
         else:
@@ -232,7 +236,7 @@ class AnalisadorParser:
         if self.conferirToken([Tag.OP_AD, Tag.OP_MIN]):
             self.addOp()
             factorB = self.factorB()
-            termLinhaFilho =self.termLinha()
+            termLinhaFilho = self.termLinha()
             if termLinhaFilho.tipo == Tag.TIPO_VAZIO and factorB.tipo == Tag.TIPO_NUMERO:
                 termLinha.tipo = Tag.TIPO_NUMERO
             elif termLinhaFilho == factorB.tipo and factorB.tipo == Tag.TIPO_NUMERO:
@@ -274,7 +278,7 @@ class AnalisadorParser:
             self.advance()
         elif self.conferirToken([Tag.SMB_OPA]):
             self.eat(Tag.SMB_OPA)
-            self.expression()
+            factor = self.expression()
             self.eat(Tag.SMB_CPA)
         elif self.conferirToken([Tag.NUM_CONST, Tag.CHAR_CONST]):
             factor.tipo = self.constant()
@@ -286,7 +290,14 @@ class AnalisadorParser:
         factorA = No()
         if self.conferirToken([Tag.KW_NOT]):
             self.advance()
-        factorA.tipo = self.factor().tipo
+            factor = self.factor()
+            if factor.tipo != Tag.TIPO_LOGICO:
+                factorA.tipo = Tag.TIPO_ERRO
+            else:
+                factorA.tipo = Tag.TIPO_LOGICO
+        else:
+            factor = self.factor()
+            factorA.tipo = factor.tipo
 
         return factorA
 
@@ -307,7 +318,7 @@ class AnalisadorParser:
         factorBlinha = No()
         if self.conferirToken([Tag.OP_DIV, Tag.OP_MUL]):
             self.mulop()
-            factorA =self.factorA()
+            factorA = self.factorA()
             factorBlinhaFilho = self.factorBLinha()
             if factorBlinhaFilho.tipo == Tag.TIPO_VAZIO and factorA.tipo == Tag.TIPO_NUMERO:
                 factorBlinha.tipo = Tag.TIPO_NUMERO
